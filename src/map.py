@@ -1,9 +1,9 @@
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import (loadPrcFileData, BitMask32, Vec3, CollisionTraverser,
-    CollisionNode, LColor, CollisionHandlerQueue, CollisionRay)
+    CollisionNode, LColor, CollisionHandlerQueue, CollisionRay, OrthographicLens)
 
 config_vars = '''
-                win-size 1280 720
+                win-size 1600 900
                 show-frame-rate-meter 1
                 window-title Enlight
               '''
@@ -16,19 +16,25 @@ WHITE = (1, 1, 1, 1)
 SELECTED = (0.3, 0.9, 0, 1)
 
 ###
-# Main Map Class
+#   Main Map Class
 ###
 class GameMap(ShowBase):
 
     def __init__(self):
 
-        # Initialize background and set up the camera, 
+        #   Initialize background and set up the camera, 
         super().__init__()
         self.cam.setPos(0, -10, 0)
         self.cam.setR(45)   # Roll
         self.cam.setP(self.cam, 60)     # Pitch
-        self.cam.setPos(self.cam, self.cam.getPos() + Vec3(0, 0, -4))
+        self.cam.setPos(self.cam, self.cam.getPos() + Vec3(0, 0, -2))
         self.set_background_color(0, 0, 0, 1)
+
+        #   Set up for orthographic projection
+        camlens = OrthographicLens()
+        camlens.setFilmSize(25, 15)
+        camlens.setNearFar(-50, 50)
+        self.cam.node().setLens(camlens)
 
         #   Load basic tile texture
         self.plane = self.loader.loadModel('../eggs/plane.egg')
@@ -54,8 +60,26 @@ class GameMap(ShowBase):
         self.trav.addCollider(point_nodepath, self.queue)
         self.taskMgr.add(self.mouse_action, 'mouse-action')
 
+        #   Initialize the character model
+        self.player = self.loader.loadModel('models/box')
+        self.player.setPos(0, -1, 0)
+        self.player.reparentTo(self.render)
+
+        #   Allow movement
+        self.accept('w', self.move, ['up'])
+        self.accept('a', self.move, ['left'])
+        self.accept('s', self.move, ['down'])
+        self.accept('d', self.move, ['right'])
+        self.accept('w-repeat', self.move, ['up'])
+        self.accept('a-repeat', self.move, ['left'])
+        self.accept('s-repeat', self.move, ['down'])
+        self.accept('d-repeat', self.move, ['right'])
+
+
+
     #   Build the map grid
     def grid_gen(self, xmax, zmax):
+
         i = 0
         for x in range(xmax):
             for z in range(zmax):
@@ -86,8 +110,20 @@ class GameMap(ShowBase):
                 self.map.getChild(tile_number).setColor(SELECTED)
                 self.hit = tile_number
 
-
         return action.cont
+    
+    #   Move the player model around the map with WASD
+    def move(self, direction):
+
+        match direction:
+            case 'up':
+                self.player.setPos(self.player.getPos() + Vec3(0, 0, 1))
+            case 'left': 
+                self.player.setPos(self.player.getPos() + Vec3(-1, 0, 0))
+            case 'down':
+                self.player.setPos(self.player.getPos() + Vec3(0, 0, -1))
+            case 'right':
+                self.player.setPos(self.player.getPos() + Vec3(1, 0, 0))
 
 
 
