@@ -1,6 +1,10 @@
+from tkinter import ON
 from direct.showbase.ShowBase import ShowBase
 from panda3d.core import (loadPrcFileData, BitMask32, Vec3, CollisionTraverser,
-    CollisionNode, LColor, CollisionHandlerQueue, CollisionRay, OrthographicLens)
+    CollisionNode, LColor, CollisionHandlerQueue, CollisionRay, OrthographicLens,
+    MouseWatcher, KeyboardButton)
+from direct.gui import DirectGui, OnscreenText
+import time
 
 config_vars = '''
                 win-size 1600 900
@@ -64,8 +68,8 @@ class GameMap(ShowBase):
         self.player = self.loader.loadModel('models/box')
         self.player.setPos(0, -1, 0)
         self.player.reparentTo(self.render)
-
-        #   Allow movement
+        
+        #   Accept inputs
         self.accept('w', self.move, ['up'])
         self.accept('a', self.move, ['left'])
         self.accept('s', self.move, ['down'])
@@ -75,6 +79,43 @@ class GameMap(ShowBase):
         self.accept('s-repeat', self.move, ['down'])
         self.accept('d-repeat', self.move, ['right'])
 
+        #   Define inputs
+        self.up = KeyboardButton.ascii_key('w')
+        self.down = KeyboardButton.ascii_key('s')
+        self.left = KeyboardButton.ascii_key('a')
+        self.right = KeyboardButton.ascii_key('d')
+
+        #   Font setup and menus
+        mrb = self.loader.loadFont('../eggs/MorrisRoman-Black.ttf')
+
+        hp = OnscreenText.TextNode('hp')
+        hp.setText('HEALTH')
+        hp.setFont(mrb)
+        hppath = self.aspect2d.attachNewNode(hp)
+        hppath.setScale(0.05)
+        hppath.setPos(-1.75, 0, 0.95)
+
+        stam = OnscreenText.TextNode('stam')
+        stam.setText('STAMINA')
+        stam.setFont(mrb)
+        stampath = self.aspect2d.attachNewNode(stam)
+        stampath.setScale(0.05)
+        stampath.setPos(-1.75, 0, 0.89)
+
+        src = OnscreenText.TextNode('src')
+        src.setText('SOURCE')
+        src.setFont(mrb)
+        srcpath = self.aspect2d.attachNewNode(src)
+        srcpath.setScale(0.05)
+        srcpath.setPos(-1.75, 0, 0.83)
+
+        #   UI buttons
+        settings = DirectGui.DirectButton(pos = (1.72, 0, 0.94), scale = 0.5)
+        inventory = DirectGui.DirectButton(pos = (1.61, 0, 0.94), scale = 0.5)
+
+
+        #   Visualization purposes, not in build
+        #self.wireframe_on()
 
 
     #   Build the map grid
@@ -90,14 +131,16 @@ class GameMap(ShowBase):
                 tile.find('**/pPlane1').node().setIntoCollideMask(BitMask32.bit(1))
                 i += 1
 
+
     #   Handle mouse interactions
     def mouse_action(self, action):
 
+        #   Cursor touching a tile?
         if self.hit is not False:
             self.map.getChild(self.hit).setColor(WHITE)
             self.hit = False
 
-        #   If the mouse is in the window
+        #   If the cursor is in the window
         if self.mouseWatcherNode.hasMouse():
             coord = self.mouseWatcherNode.getMouse()
             self.point_ray.setFromLens(self.camNode, coord.getX(), coord.getY())
@@ -108,22 +151,25 @@ class GameMap(ShowBase):
                 tile = self.queue.getEntry(0).getIntoNodePath().getNode(2)
                 tile_number = int(tile.getName().split('-')[-1])
                 self.map.getChild(tile_number).setColor(SELECTED)
-                self.hit = tile_number
+                self.hit = tile_number      #   Which tile are we touching?
 
         return action.cont
     
-    #   Move the player model around the map with WASD
-    def move(self, direction):
 
-        match direction:
-            case 'up':
-                self.player.setPos(self.player.getPos() + Vec3(0, 0, 1))
-            case 'left': 
-                self.player.setPos(self.player.getPos() + Vec3(-1, 0, 0))
-            case 'down':
-                self.player.setPos(self.player.getPos() + Vec3(0, 0, -1))
-            case 'right':
-                self.player.setPos(self.player.getPos() + Vec3(1, 0, 0))
+    #   Move the player model around the map with WASD
+    def move(self, task):
+
+        if self.mouseWatcherNode.is_button_down(self.up):
+            self.player.setPos(self.player.getPos() + Vec3(1, 0, 1))
+ 
+        if self.mouseWatcherNode.is_button_down(self.left):
+            self.player.setPos(self.player.getPos() + Vec3(-1, 0, 1))
+
+        if self.mouseWatcherNode.is_button_down(self.down):
+            self.player.setPos(self.player.getPos() + Vec3(-1, 0, -1))
+
+        if self.mouseWatcherNode.is_button_down(self.right):    
+            self.player.setPos(self.player.getPos() + Vec3(1, 0, -1))
 
 
 
