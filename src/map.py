@@ -3,8 +3,9 @@ from direct.showbase.ShowBase import ShowBase
 from panda3d.core import (loadPrcFileData, BitMask32, Vec3, CollisionTraverser,
     CollisionNode, LColor, CollisionHandlerQueue, CollisionRay, OrthographicLens,
     MouseWatcher, KeyboardButton)
-from direct.gui import DirectGui, OnscreenText
+from direct.gui import DirectGui, OnscreenText, DirectFrame, DirectWaitBar, DirectGuiGlobals
 import time
+import player
 
 config_vars = '''
                 win-size 1600 900
@@ -19,10 +20,11 @@ loadPrcFileData('', config_vars)
 WHITE = (1, 1, 1, 1)
 SELECTED = (0.3, 0.9, 0, 1)
 
-###
-#   Main Map Class
-###
+mainchar = player.Player()
+
 class GameMap(ShowBase):
+
+    '''Main Map class'''
 
     def __init__(self):
 
@@ -85,29 +87,45 @@ class GameMap(ShowBase):
         self.left = KeyboardButton.ascii_key('a')
         self.right = KeyboardButton.ascii_key('d')
 
-        #   Font setup and menus
+        #   Font setup, UI, and menus
         mrb = self.loader.loadFont('../eggs/MorrisRoman-Black.ttf')
 
-        hp = OnscreenText.TextNode('hp')
-        hp.setText('HEALTH')
-        hp.setFont(mrb)
-        hppath = self.aspect2d.attachNewNode(hp)
+        hptext = OnscreenText.TextNode('hp')
+        hptext.setText('HEALTH')
+        hptext.setFont(mrb)
+        hppath = self.aspect2d.attachNewNode(hptext)
         hppath.setScale(0.05)
         hppath.setPos(-1.75, 0, 0.95)
 
-        stam = OnscreenText.TextNode('stam')
-        stam.setText('STAMINA')
-        stam.setFont(mrb)
-        stampath = self.aspect2d.attachNewNode(stam)
+        stamtext = OnscreenText.TextNode('stam')
+        stamtext.setText('STAMINA')
+        stamtext.setFont(mrb)
+        stampath = self.aspect2d.attachNewNode(stamtext)
         stampath.setScale(0.05)
         stampath.setPos(-1.75, 0, 0.89)
 
-        src = OnscreenText.TextNode('src')
-        src.setText('SOURCE')
-        src.setFont(mrb)
-        srcpath = self.aspect2d.attachNewNode(src)
+        srctext = OnscreenText.TextNode('src')
+        srctext.setText('SOURCE')
+        srctext.setFont(mrb)
+        srcpath = self.aspect2d.attachNewNode(srctext)
         srcpath.setScale(0.05)
         srcpath.setPos(-1.75, 0, 0.83)
+
+        #   Resource bars
+        
+        hpbar = DirectGui.DirectWaitBar(text = '', value = mainchar.hp, range = 10, pos = (-1.15, 0, 0.967),
+            barRelief = DirectGuiGlobals.GROOVE, relief = DirectGuiGlobals.GROOVE, barColor = (1, 0.1, 0.1, 1),
+            barBorderWidth = (0.05, 0.03), scale = 0.3, frameColor = (0.05, 0.05, 0.05, 0.7))
+        
+        stambar = DirectGui.DirectWaitBar(text = '', value = mainchar.stam, range = 10, pos = (-1.15, 0, 0.907),
+            barRelief = DirectGuiGlobals.GROOVE, relief = DirectGuiGlobals.GROOVE, barColor = (0.2, 1, 0.2, 1),
+            barBorderWidth = (0.05, 0.03), scale = 0.3, frameColor = (0.05, 0.05, 0.05, 0.7))
+
+        srcbar = DirectGui.DirectWaitBar(text = '', value = mainchar.src, range = 10, pos = (-1.15, 0, 0.847),
+            barRelief = DirectGuiGlobals.GROOVE, relief = DirectGuiGlobals.GROOVE, barColor = (0.15, 0.1, 1, 1),
+            barBorderWidth = (0.05, 0.03), scale = 0.3, frameColor = (0.05, 0.05, 0.05, 0.7))
+
+
 
         #   UI buttons
         settings = DirectGui.DirectButton(pos = (1.72, 0, 0.94), scale = 0.5)
@@ -118,8 +136,9 @@ class GameMap(ShowBase):
         #self.wireframe_on()
 
 
-    #   Build the map grid
     def grid_gen(self, xmax, zmax):
+
+        '''Build the map grid '''    
 
         i = 0
         for x in range(xmax):
@@ -132,8 +151,9 @@ class GameMap(ShowBase):
                 i += 1
 
 
-    #   Handle mouse interactions
     def mouse_action(self, action):
+
+        '''Handle mouse interactions '''
 
         #   Cursor touching a tile?
         if self.hit is not False:
@@ -156,8 +176,9 @@ class GameMap(ShowBase):
         return action.cont
     
 
-    #   Move the player model around the map with WASD
     def move(self, task):
+
+        '''Move the player model around the map with WASD'''
 
         if self.mouseWatcherNode.is_button_down(self.up):
             self.player.setPos(self.player.getPos() + Vec3(1, 0, 1))
