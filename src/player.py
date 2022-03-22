@@ -11,8 +11,15 @@ class Player():
     '''Default player class'''
 
     def __init__(self):
+
+        self.hpmax = 10
+        self.srcmax = 10
+        self.stammax = 15
+
         self.hp = 10
         self.src = 10
-        self.stam = 10
+        self.stam = 15
+
+
         self.level = 1
         self.xp = 0

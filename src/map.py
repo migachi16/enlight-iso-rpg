@@ -67,9 +67,9 @@ class GameMap(ShowBase):
         self.taskMgr.add(self.mouse_action, 'mouse-action')
 
         #   Initialize the character model
-        self.player = self.loader.loadModel('models/box')
-        self.player.setPos(0, -1, 0)
-        self.player.reparentTo(self.render)
+        self.model = self.loader.loadModel('models/box')
+        self.model.setPos(0, -1, 0)
+        self.model.reparentTo(self.render)
         
         #   Accept inputs
         self.accept('w', self.move, ['up'])
@@ -113,23 +113,23 @@ class GameMap(ShowBase):
 
         #   Resource bars
         
-        hpbar = DirectGui.DirectWaitBar(text = '', value = mainchar.hp, range = 10, pos = (-1.15, 0, 0.967),
+        self.hpbar = DirectGui.DirectWaitBar(text = '', value = mainchar.hp, range = mainchar.hpmax, pos = (-1.15, 0, 0.967),
             barRelief = DirectGuiGlobals.GROOVE, relief = DirectGuiGlobals.GROOVE, barColor = (1, 0.1, 0.1, 1),
             barBorderWidth = (0.05, 0.03), scale = 0.3, frameColor = (0.05, 0.05, 0.05, 0.7))
         
-        stambar = DirectGui.DirectWaitBar(text = '', value = mainchar.stam, range = 10, pos = (-1.15, 0, 0.907),
+        self.stambar = DirectGui.DirectWaitBar(text = '', value = mainchar.stam, range = mainchar.stammax, pos = (-1.15, 0, 0.907),
             barRelief = DirectGuiGlobals.GROOVE, relief = DirectGuiGlobals.GROOVE, barColor = (0.2, 1, 0.2, 1),
             barBorderWidth = (0.05, 0.03), scale = 0.3, frameColor = (0.05, 0.05, 0.05, 0.7))
 
-        srcbar = DirectGui.DirectWaitBar(text = '', value = mainchar.src, range = 10, pos = (-1.15, 0, 0.847),
+        self.srcbar = DirectGui.DirectWaitBar(text = '', value = mainchar.src, range = mainchar.srcmax, pos = (-1.15, 0, 0.847),
             barRelief = DirectGuiGlobals.GROOVE, relief = DirectGuiGlobals.GROOVE, barColor = (0.15, 0.1, 1, 1),
             barBorderWidth = (0.05, 0.03), scale = 0.3, frameColor = (0.05, 0.05, 0.05, 0.7))
 
 
 
         #   UI buttons
-        settings = DirectGui.DirectButton(pos = (1.72, 0, 0.94), scale = 0.5)
-        inventory = DirectGui.DirectButton(pos = (1.61, 0, 0.94), scale = 0.5)
+        self.settings = DirectGui.DirectButton(pos = (1.72, 0, 0.94), scale = 0.5)
+        self.inventory = DirectGui.DirectButton(pos = (1.61, 0, 0.94), scale = 0.5)
 
 
         #   Visualization purposes, not in build
@@ -180,17 +180,26 @@ class GameMap(ShowBase):
 
         '''Move the player model around the map with WASD'''
 
+        initial = self.model.getPos()
+
         if self.mouseWatcherNode.is_button_down(self.up):
-            self.player.setPos(self.player.getPos() + Vec3(1, 0, 1))
+            self.model.setPos(self.model.getPos() + Vec3(1, 0, 1))
  
         if self.mouseWatcherNode.is_button_down(self.left):
-            self.player.setPos(self.player.getPos() + Vec3(-1, 0, 1))
+            self.model.setPos(self.model.getPos() + Vec3(-1, 0, 1))
 
         if self.mouseWatcherNode.is_button_down(self.down):
-            self.player.setPos(self.player.getPos() + Vec3(-1, 0, -1))
+            self.model.setPos(self.model.getPos() + Vec3(-1, 0, -1))
 
         if self.mouseWatcherNode.is_button_down(self.right):    
-            self.player.setPos(self.player.getPos() + Vec3(1, 0, -1))
+            self.model.setPos(self.model.getPos() + Vec3(1, 0, -1))
+        
+        final = self.model.getPos()
+
+        if initial != final:
+            mainchar.stam -= 1
+            self.stambar.update(mainchar.stam)
+            
 
 
 
